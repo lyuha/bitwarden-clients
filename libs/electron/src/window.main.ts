@@ -13,6 +13,7 @@ const WindowEventHandlingDelay = 100;
 export class WindowMain {
   win: BrowserWindow;
   isQuitting = false;
+  isClosing = false;
 
   private windowStateChangeTimer: NodeJS.Timer;
   private windowStates: { [key: string]: any } = {};
@@ -76,7 +77,11 @@ export class WindowMain {
         app.on("window-all-closed", () => {
           // On OS X it is common for applications and their menu bar
           // to stay active until the user quits explicitly with Cmd + Q
-          if (process.platform !== "darwin" || this.isQuitting || isMacAppStore()) {
+          if (
+            (process.platform !== "darwin" && this.isQuitting) ||
+            this.isQuitting ||
+            isMacAppStore()
+          ) {
             app.quit();
           }
         });
@@ -162,8 +167,11 @@ export class WindowMain {
       this.win = null;
     });
 
-    this.win.on("close", async () => {
-      await this.updateWindowState(mainWindowSizeKey, this.win);
+    this.win.on("close", async (e) => {
+      if (!this.isClosing) {
+        e.preventDefault();
+        await this.updateWindowState(mainWindowSizeKey, this.win);
+      }
     });
 
     this.win.on("maximize", async () => {

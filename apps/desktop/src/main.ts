@@ -163,7 +163,7 @@ export class Main {
           },
         ]);
         if (await this.stateService.getEnableStartToTray()) {
-          this.trayMain.hideToTray();
+          await this.trayMain.hideToTray();
         }
         this.powerMonitorMain.init();
         await this.updaterMain.init();

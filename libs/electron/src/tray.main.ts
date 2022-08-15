@@ -45,7 +45,7 @@ export class TrayMain {
       { type: "separator" },
       {
         label: this.i18nService.t("exit"),
-        click: () => this.closeWindow(),
+        click: () => this.quitApp(),
       },
     ];
 
@@ -63,15 +63,18 @@ export class TrayMain {
     win.on("minimize", async (e: Event) => {
       if (await this.stateService.getEnableMinimizeToTray()) {
         e.preventDefault();
-        this.hideToTray();
+        await this.hideToTray();
       }
     });
 
     win.on("close", async (e: Event) => {
-      if (await this.stateService.getEnableCloseToTray()) {
-        if (!this.windowMain.isQuitting) {
-          e.preventDefault();
-          this.hideToTray();
+      if (!this.windowMain.isClosing) {
+        e.preventDefault();
+        if (await this.stateService.getEnableCloseToTray()) {
+          await this.hideToTray();
+        } else {
+          this.windowMain.isClosing = true;
+          this.windowMain.win.close();
         }
       }
     });
@@ -170,6 +173,7 @@ export class TrayMain {
         this.hideDock();
       }
     } else {
+      this.windowMain.isClosing = false;
       this.windowMain.win.show();
       if (this.isDarwin()) {
         this.showDock();
@@ -177,10 +181,11 @@ export class TrayMain {
     }
   }
 
-  private closeWindow() {
+  private quitApp() {
     this.windowMain.isQuitting = true;
     if (this.windowMain.win != null) {
       this.windowMain.win.close();
+      app.quit();
     }
   }
 }
